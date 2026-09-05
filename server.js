@@ -4,6 +4,7 @@ const cors = require('cors');
 const puppeteer = require('puppeteer');
 const nodemailer = require('nodemailer');
 const { saveOrder, getOrder } = require('./storage');
+const { buildFullKitHTML } = require('./generateKit');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -36,15 +37,7 @@ async function generateAndSendPDF(order, buyerEmail) {
   });
   const page = await browser.newPage();
 
-  const htmlContent = `
-    <html>
-      <body style="font-family: Georgia; text-align: center; padding: 50px;">
-        <h1 style="color: #b76e79;">${order.bride} & ${order.groom}</h1>
-        <p>Wedding Date: ${order.date}</p>
-        <p>Venue: ${order.venue}</p>
-      </body>
-    </html>
-  `;
+  const htmlContent = buildFullKitHTML(order);
 
   await page.setContent(htmlContent);
   const pdfBuffer = await page.pdf({ format: 'A4' });
@@ -103,15 +96,7 @@ app.get('/generate', async (req, res) => {
   });
   const page = await browser.newPage();
 
-  const htmlContent = `
-    <html>
-      <body style="font-family: Georgia; text-align: center; padding: 50px;">
-        <h1 style="color: #b76e79;">${order.bride} & ${order.groom}</h1>
-        <p>Wedding Date: ${order.date}</p>
-        <p>Venue: ${order.venue}</p>
-      </body>
-    </html>
-  `;
+  const htmlContent = buildFullKitHTML(order);
 
   await page.setContent(htmlContent);
   const pdfBuffer = await page.pdf({ format: 'A4' });
