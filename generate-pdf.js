@@ -1,11 +1,17 @@
 const puppeteer = require('puppeteer');
 
-async function generatePDF(bride, groom, date, venue) {
+async function generatePdf(bride, groom, date, venue) {
+  // Use environment check for executablePath so it works locally on Windows and remotely on Render
+  const executablePath = process.env.NODE_ENV === 'production' 
+    ? process.env.PUPPETEER_EXECUTABLE_PATH || undefined 
+    : 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+
   const browser = await puppeteer.launch({
-    executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    ...(executablePath && { executablePath }),
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   });
+
   const page = await browser.newPage();
 
   const htmlContent = `
@@ -19,10 +25,12 @@ async function generatePDF(bride, groom, date, venue) {
   `;
 
   await page.setContent(htmlContent);
-  await page.pdf({ path: 'test-output.pdf', format: 'A4' });
+  const pdfBuffer = await page.pdf({ format: 'A4' });
 
   await browser.close();
   console.log('PDF created for ' + bride + ' & ' + groom);
+  
+  return pdfBuffer;
 }
 
-generatePDF("Ahmed", "Layla", "2026-06-10", "Grand Hotel");
+module.exports = { generatePdf };
