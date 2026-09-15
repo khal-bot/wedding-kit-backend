@@ -1,26 +1,26 @@
-const fs = require('fs');
-const path = require('path');
+const { Redis } = require('@upstash/redis');
 
-const filePath = path.join(__dirname, 'orders.json');
+const redis = Redis.fromEnv();
 
-function loadOrders() {
-  if (!fs.existsSync(filePath)) {
-    return {};
+async function saveOrder(id, data) {
+  try {
+    await redis.set(`order:${id}`, JSON.stringify(data), { ex: 604800 });
+    console.log('Saved order to Redis:', id);
+  } catch (error) {
+    console.error('Redis save error:', error);
+    throw error;
   }
-  const data = fs.readFileSync(filePath, 'utf8');
-  return JSON.parse(data);
 }
 
-function saveOrder(id, data) {
-  const orders = loadOrders();
-  orders[id] = data;
-  fs.writeFileSync(filePath, JSON.stringify(orders, null, 2));
-  console.log('Saved order:', id, data);
-}
-
-function getOrder(id) {
-  const orders = loadOrders();
-  return orders[id];
+async function getOrder(id) {
+  try {
+    const data = await redis.get(`order:${id}`);
+    if (!data) return null;
+    return typeof data === 'string' ? JSON.parse(data) : data;
+  } catch (error) {
+    console.error('Redis get error:', error);
+    return null;
+  }
 }
 
 module.exports = { saveOrder, getOrder };
