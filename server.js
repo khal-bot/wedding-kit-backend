@@ -64,7 +64,8 @@ app.get('/generate', async (req, res) => {
     const pdfBuffer = await page.pdf({ format: 'A4' });
     await browser.close();
 
-    res.set('Content-Type', 'application/pdf');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="wedding-kit.pdf"');
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF Generation Error:', error);
