@@ -39,12 +39,13 @@ app.get('/generate', async (req, res) => {
 
   try {
     const browser = await puppeteer.launch({
-      headless: true,
+      headless: 'new',
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--single-process'
+        '--disable-gpu'
       ]
     });
     const page = await browser.newPage();
@@ -65,12 +66,12 @@ app.get('/generate', async (req, res) => {
       </html>
     `;
 
-    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
     await browser.close();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="wedding-kit.pdf"');
+    res.setHeader('Content-Disposition', 'inline; filename="wedding-kit.pdf"');
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF Generation Error:', error);
