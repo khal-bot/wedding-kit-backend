@@ -40,7 +40,12 @@ app.get('/generate', async (req, res) => {
   try {
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process'
+      ]
     });
     const page = await browser.newPage();
 
@@ -50,7 +55,7 @@ app.get('/generate', async (req, res) => {
         <head>
           <meta charset="UTF-8">
         </head>
-        <body style="font-family: Georgia, serif; text-align: center; padding: 50px; background-color: #fffaf0;">
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px; background-color: #fffaf0;">
           <h1 style="color: #b76e79; font-size: 36px; margin-bottom: 10px;">${order.bride} & ${order.groom}</h1>
           <p style="font-size: 18px; color: #555;">Wedding Date: <strong>${order.date || 'N/A'}</strong></p>
           <p style="font-size: 18px; color: #555;">Venue: <strong>${order.venue || 'N/A'}</strong></p>
@@ -60,12 +65,12 @@ app.get('/generate', async (req, res) => {
       </html>
     `;
 
-    await page.setContent(htmlContent);
-    const pdfBuffer = await page.pdf({ format: 'A4' });
+    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true });
     await browser.close();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="wedding-kit.pdf"');
+    res.setHeader('Content-Disposition', 'attachment; filename="wedding-kit.pdf"');
     res.send(pdfBuffer);
   } catch (error) {
     console.error('PDF Generation Error:', error);
